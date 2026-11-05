@@ -182,3 +182,159 @@
     border-right-color: var(--border);
   }
 }
+
+.app {
+  width: min(100% - 40px, 900px);
+  margin: 0 auto;
+  padding: 48px 0;
+  text-align: left;
+}
+
+.app-header {
+  margin-bottom: 36px;
+}
+
+.eyebrow {
+  color: #a64b27;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.app-header h1 {
+  margin: 8px 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(32px, 6vw, 48px);
+  line-height: 1.1;
+}
+
+.app-header > p:last-child {
+  color: #5e625e;
+}
+
+.api-form {
+  display: grid;
+  gap: 8px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid #d8d9d4;
+}
+
+.api-form label {
+  color: #323832;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.api-controls {
+  display: flex;
+  gap: 10px;
+}
+
+.api-controls input {
+  min-width: 0;
+  flex: 1;
+  padding: 11px 12px;
+  border: 1px solid #aeb3aa;
+  border-radius: 4px;
+  background: #fff;
+  color: #202520;
+  font: inherit;
+}
+
+.api-controls button {
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 4px;
+  background: #225c4b;
+  color: #fff;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.api-controls button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.results {
+  padding-top: 24px;
+}
+
+.results-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.results-heading h2 {
+  margin: 0;
+  color: #202520;
+  font-size: 21px;
+}
+
+.results-heading span,
+.status {
+  color: #5e625e;
+  font-size: 14px;
+}
+
+.error {
+  padding: 12px;
+  border-left: 3px solid #b33a32;
+  background: #fff0ed;
+  color: #78251f;
+}
+
+.document-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.document {
+  padding: 14px 16px;
+  border: 1px solid #d8d9d4;
+  border-radius: 4px;
+  background: #fff;
+}
+
+.document-field {
+  display: grid;
+  grid-template-columns: minmax(100px, 0.3fr) minmax(0, 1fr);
+  gap: 12px;
+  padding: 5px 0;
+  overflow-wrap: anywhere;
+}
+
+.document-field strong {
+  color: #225c4b;
+}
+
+.document-field span {
+  color: #323832;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 14px;
+}
+
+@media (max-width: 560px) {
+  .app {
+    width: min(100% - 28px, 900px);
+    padding: 32px 0;
+  }
+
+  .api-controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .document-field {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+}

@@ -1,178 +1,99 @@
-import React, { useEffect, useState } from 'react'
-import { ApiError, apiDelete, apiGet, apiPost, apiPut } from './api'
-import ListaUsuarios from './ListaUsuarios'
+import React, { useState } from 'react'
 import './App.css'
 
-function obterMensagemErro(error) {
-  if (error instanceof ApiError && error.status === 404) {
-    return 'Recurso não encontrado'
+function formatarValor(valor) {
+  if (valor !== null && typeof valor === 'object') {
+    return JSON.stringify(valor)
   }
 
-  if (error instanceof ApiError && error.status === 500) {
-    return 'Erro no servidor'
-  }
-
-  if (error instanceof TypeError && error.message === 'Failed to fetch') {
-    return 'Falha de rede'
-  }
-
-  return 'Não foi possível concluir a operação.'
+  return String(valor)
 }
 
 function App() {
-  const [usuarios, setUsuarios] = useState([])
-  const [nome, setNome] = useState('')
-  const [email, setEmail] = useState('')
-  const [usuarioEditando, setUsuarioEditando] = useState(null)
-  const [carregando, setCarregando] = useState(true)
+  const [url, setUrl] = useState(import.meta.env.VITE_API_URL ?? '')
+  const [itens, setItens] = useState(null)
+  const [carregando, setCarregando] = useState(false)
   const [erro, setErro] = useState('')
 
-  useEffect(() => {
-    const controller = new AbortController()
-
-    async function buscarUsuarios() {
-      try {
-        const data = await apiGet('/users', { signal: controller.signal })
-        setUsuarios(data)
-      } catch (error) {
-        if (error.name !== 'AbortError') {
-          setErro(obterMensagemErro(error))
-        }
-      } finally {
-        if (!controller.signal.aborted) {
-          setCarregando(false)
-        }
-      }
-    }
-
-    buscarUsuarios()
-
-    return () => {
-      controller.abort()
-    }
-  }, [])
-
-  function limparFormulario() {
-    setNome('')
-    setEmail('')
-    setUsuarioEditando(null)
-  }
-
-  function editarUsuario(usuario) {
-    setUsuarioEditando(usuario)
-    setNome(usuario.name)
-    setEmail(usuario.email)
-    setErro('')
-  }
-
-  async function salvarUsuario(event) {
+  async function buscarItens(event) {
     event.preventDefault()
+    setCarregando(true)
     setErro('')
-
-    const dados = { name: nome.trim(), email: email.trim() }
+    setItens(null)
 
     try {
-      if (usuarioEditando) {
-        const atualizado = await apiPut(`/users/${usuarioEditando.id}`, {
-          ...usuarioEditando,
-          ...dados,
-        })
-        setUsuarios(lista =>
-          lista.map(usuario =>
-            usuario.id === usuarioEditando.id
-              ? { ...usuario, ...atualizado, ...dados }
-              : usuario
-          )
-        )
-      } else {
-        const criado = await apiPost('/users', dados)
-        setUsuarios(lista => [
-          ...lista,
-          { ...dados, ...criado, id: Date.now() },
-        ])
+      const resposta = await fetch(url)
+      if (!resposta.ok) {
+        throw new Error(`A API respondeu com status ${resposta.status}.`)
       }
 
-      limparFormulario()
-    } catch (error) {
-      setErro(obterMensagemErro(error))
-    }
-  }
-
-  async function excluirUsuario(usuario) {
-    setErro('')
-
-    try {
-      await apiDelete(`/users/${usuario.id}`)
-      setUsuarios(lista => lista.filter(item => item.id !== usuario.id))
-
-      if (usuarioEditando?.id === usuario.id) {
-        limparFormulario()
+      const dados = await resposta.json()
+      if (!Array.isArray(dados)) {
+        throw new Error('A resposta da API precisa ser uma lista JSON.')
       }
+
+      setItens(dados)
     } catch (error) {
-      setErro(obterMensagemErro(error))
+      setErro(error instanceof TypeError
+        ? 'Não foi possível acessar a API. Verifique a URL, a conexão e o CORS.'
+        : error.message)
+    } finally {
+      setCarregando(false)
     }
   }
 
   return (
     <main className="app">
       <header className="app-header">
-        <p className="eyebrow">Aula 07 · Exercícios</p>
-        <h1>Usuários</h1>
-        <p>Gerencie os usuários cadastrados.</p>
+        <p className="eyebrow">Aula 11 · SQL e NoSQL</p>
+        <h1>Documentos da API</h1>
+        <p>Consulte uma rota Express e inspecione os documentos retornados.</p>
       </header>
 
-      <section className="editor" aria-labelledby="form-title">
-        <h2 id="form-title">
-          {usuarioEditando ? 'Editar usuário' : 'Novo usuário'}
-        </h2>
-        <form onSubmit={salvarUsuario}>
-          <label>
-            Nome
-            <input
-              autoComplete="name"
-              onChange={event => setNome(event.target.value)}
-              required
-              value={nome}
-            />
-          </label>
-          <label>
-            E-mail
-            <input
-              autoComplete="email"
-              onChange={event => setEmail(event.target.value)}
-              required
-              type="email"
-              value={email}
-            />
-          </label>
-          <div className="form-actions">
-            <button className="primary-button" type="submit">
-              {usuarioEditando ? 'Salvar alterações' : 'Adicionar usuário'}
-            </button>
-            {usuarioEditando && (
-              <button className="text-button" onClick={limparFormulario} type="button">
-                Cancelar
-              </button>
-            )}
-          </div>
-        </form>
-      </section>
+      <form className="api-form" onSubmit={buscarItens}>
+        <label htmlFor="api-url">URL completa da listagem</label>
+        <div className="api-controls">
+          <input
+            id="api-url"
+            onChange={event => setUrl(event.target.value)}
+            placeholder="http://localhost:PORTA/caminho"
+            required
+            type="url"
+            value={url}
+          />
+          <button disabled={carregando} type="submit">
+            {carregando ? 'Consultando...' : 'Consultar API'}
+          </button>
+        </div>
+      </form>
 
-      <section className="user-section" aria-labelledby="users-title">
-        <div className="section-heading">
-          <h2 id="users-title">Lista de usuários</h2>
-          {!carregando && <span>{usuarios.length} usuários</span>}
+      <section className="results" aria-live="polite" aria-busy={carregando}>
+        <div className="results-heading">
+          <h2>Resultados</h2>
+          {itens !== null && <span>{itens.length} documentos</span>}
         </div>
 
-        {erro && <p className="error-message" role="alert">{erro}</p>}
-        {carregando ? (
-          <p className="status-message">Carregando usuários...</p>
-        ) : (
-          <ListaUsuarios
-            usuarios={usuarios}
-            onEditar={editarUsuario}
-            onExcluir={excluirUsuario}
-          />
+        {carregando && <p className="status">Carregando documentos...</p>}
+        {!carregando && erro && <p className="error" role="alert">{erro}</p>}
+        {!carregando && !erro && itens === null && (
+          <p className="status">Informe a URL da rota de listagem para começar.</p>
+        )}
+        {!carregando && !erro && itens?.length === 0 && (
+          <p className="status">A API não retornou documentos.</p>
+        )}
+        {!carregando && !erro && itens?.length > 0 && (
+          <ul className="document-list">
+            {itens.map(item => (
+              <li className="document" key={item._id ?? item.id}>
+                {Object.entries(item).map(([campo, valor]) => (
+                  <div className="document-field" key={campo}>
+                    <strong>{campo}</strong>
+                    <span>{formatarValor(valor)}</span>
+                  </div>
+                ))}
+              </li>
+            ))}
+          </ul>
         )}
       </section>
     </main>
